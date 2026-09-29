@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Empire - Mini Casino</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #0f0f13;
+            --panel-bg: #1a1a24;
+            --primary: #00ff88;
+            --danger: #ff3366;
+            --gold: #ffcc00;
+            --info: #00bcd4;
+            --text: #ffffff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        /* Giriş Ekranı */
+        #login-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 80vh; text-align: center;
+        }
+
+        #login-screen h1 { color: var(--gold); font-size: 2.8rem; margin-bottom: 10px; }
+        input {
+            width: 80%; padding: 15px; margin: 15px 0; border: 2px solid #333;
+            background: #111; color: white; border-radius: 10px; font-size: 1.1rem; text-align: center;
+            outline: none; transition: 0.3s;
+        }
+        input:focus { border-color: var(--primary); }
+        
+        button {
+            padding: 12px 24px; font-size: 1rem; font-weight: 600; color: #000;
+            background: var(--primary); border: none; border-radius: 8px; cursor: pointer;
+            transition: 0.2s; box-shadow: 0 0 10px rgba(0, 255, 136, 0.3); margin: 5px;
+        }
+        button:hover { transform: scale(1.03); box-shadow: 0 0 20px rgba(0, 255, 136, 0.6); }
+        button:active { transform: scale(0.97); }
+        button:disabled { background: #555; cursor: not-allowed; box-shadow: none; transform: none; color: #888; }
+
+        /* Dashboard */
+        #dashboard { display: none; }
+        
+        .header {
+            background: var(--panel-bg); padding: 20px; border-radius: 15px;
+            display: flex; flex-direction: column; gap: 15px;
+            margin-bottom: 20px; border: 1px solid #333;
+        }
+        .top-row { display: flex; justify-content: space-between; align-items: center; }
+        .user-info h2 { font-size: 1.2rem; color: #aaa; margin-bottom: 5px; }
+        .user-info .balance { font-size: 2rem; color: var(--gold); font-weight: 800; }
+        .user-badge { background: #333; color: var(--gold); padding: 3px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; margin-left: 10px; }
+        
+        .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .btn-daily { background: #aa00ff; color: white; box-shadow: 0 0 10px rgba(170, 0, 255, 0.4); }
+        .btn-broke { background: var(--danger); color: white; box-shadow: 0 0 10px rgba(255, 51, 102, 0.4); display: none; }
+        .btn-save { background: var(--info); color: white; padding: 8px 12px; font-size: 0.85rem; }
+
+        /* Nav Sekmeleri */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab { 
+            flex: 1; min-width: 90px; text-align: center; padding: 12px 8px; background: var(--panel-bg); 
+            border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.85rem; border: 1px solid #333; transition: 0.2s; white-space: nowrap;
+        }
+        .tab.active { background: var(--primary); color: #000; border-color: var(--primary); }
+
+        /* Oyun Panelleri */
+        .game-panel {
+            background: var(--panel-bg); padding: 25px; border-radius: 15px;
+            text-align: center; border: 1px solid #333; display: none;
+        }
+        .game-panel.active { display: block; }
+
+        .game-title { font-size: 1.8rem; margin-bottom: 10px; color: var(--gold); }
+        .game-desc { color: #888; margin-bottom: 20px; font-size: 0.9rem; }
+        
+        .bet-input { width: 100%; max-width: 200px; margin-bottom: 15px; }
+        
+        .result-box { margin-top: 20px; font-size: 1.2rem; font-weight: bold; min-height: 30px; transition: 0.3s;}
+        .win { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        .lose { color: var(--danger); }
+
+        /* Profil ve Banka Özel */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 20px; }
+        .stat-card { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .stat-card h3 { font-size: 0.9rem; color: #888; margin-bottom: 5px; }
+        .stat-card p { font-size: 1.2rem; font-weight: bold; color: var(--gold); }
+
+        /* Rütbe Barı */
+        .rank-progress-container { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #333; text-align: left; margin-top: 15px; }
+        .rank-progress-container h3 { color: var(--info); margin-bottom: 10px; font-size: 1.1rem; }
+        .progress-bar-bg { width: 100%; height: 12px; background: #333; border-radius: 10px; overflow: hidden; margin-bottom: 5px; }
+        .progress-bar-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.5s ease; }
+        .progress-text { font-size: 0.85rem; color: #aaa; display: flex; justify-content: space-between; }
+
+        .bank-timer-box { background: #222; padding: 10px; border-radius: 10px; border: 1px dashed var(--info); color: var(--info); font-weight: bold; margin-top: 15px; }
+
+        /* Çark Özel */
+        .slider-container { margin: 20px 0; }
+        input[type="range"] { width: 100%; cursor: pointer; }
+        .wheel-stats { display: flex; justify-content: space-between; margin-top: 10px; color: #aaa; }
+        .warning { color: var(--danger); font-size: 0.8rem; margin-top: 5px; display: none; }
+        .visual-wheel-box {
+            position: relative; width: 180px; height: 180px; margin: 0 auto 25px;
+            border-radius: 50%; border: 4px solid #333;
+            background: conic-gradient(var(--primary) 0% 50%, #444 50% 100%);
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            transition: background 0.3s;
+        }
+        #wheel-pointer {
+            position: absolute; width: 6px; height: 90px; background: var(--gold);
+            left: 87px; top: 0; transform-origin: 3px 90px;
+            transform: rotate(0deg); transition: transform 2.5s cubic-bezier(0.25, 1, 0.2, 1);
+            z-index: 10; border-radius: 5px; box-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+        }
+        .wheel-center-dot {
+            position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; left: 80px; top: 80px; z-index: 11;
+        }
+
+        /* Blackjack Özel */
+        .cards-area { display: flex; justify-content: space-around; margin: 20px 0; background: #111; padding: 15px; border-radius: 10px; }
+        .card-hand { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .cards-display { font-size: 1.5rem; letter-spacing: 5px; min-height: 40px; color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Giriş Ekranı -->
+        <div id="login-screen">
+            <h1>💰 Coin Empire</h1>
+            <p>Hesabına gir veya kayıt koduyla geri dön!</p>
+            <input type="text" id="username-input" placeholder="Yeni Kullanıcı Adı" autocomplete="off">
+            <button onclick="login()">Yeni Hesap Aç</button>
+            <p style="margin: 15px 0; color: #666;">veya</p>
+            <button style="background: #444; color: white;" onclick="importSave()">Kayıt Kodu Gir (İçe Aktar)</button>
+        </div>
+
+        <!-- Ana Oyun Paneli -->
+        <div id="dashboard">
+            <div class="header">
+                <div class="top-row">
+                    <div class="user-info">
+                        <h2><span id="display-name">Oyuncu</span> <span id="display-rank" class="user-badge">🌱 Çaylak</span></h2>
+                        <div class="balance"><span id="display-balance">0</span> 💰</div>
+                    </div>
+                    <button id="btn-broke" class="btn-broke" onclick="claimBrokeBonus()">BATTIM! (+1000)</button>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn-daily" onclick="claimDaily()">🎁 Günlük</button>
+                    <button class="btn-save" onclick="exportSave()">Kodu Kopyala</button>
+                    <button class="btn-save" style="background:#ff9800;" onclick="importSave()">Kodu Yükle</button>
+                    <button class="btn-save" style="background:#555;" onclick="resetAccount()">Çıkış Yap</button>
+                </div>
+            </div>
+
+            <!-- Menü Sekmeleri -->
+            <div class="tabs">
+                <div class="tab" onclick="switchTab('stats')" style="background: #2a2a35; border-color: #555;">📊 Profil</div>
+                <div class="tab active" onclick="switchTab('flip')">💰 Yazı-Tura</div>
+                <div class="tab" onclick="switchTab('slots')">🎰 Slot</div>
+                <div class="tab" onclick="switchTab('wheel')">🎡 Çark</div>
+                <div class="tab" onclick="switchTab('bj')">🃏 Blackjack</div>
+                <div class="tab" onclick="switchTab('bank')">🏦 Banka</div>
+            </div>
+
+            <!-- 0: İstatistikler ve Profil (YENİ) -->
+            <div id="panel-stats" class="game-panel">
+                <div class="game-title">İstatistikler & Rütbe</div>
+                
+                <div class="grid-2">
+                    <div class="stat-card">
+                        <h3>Toplam Oyun</h3>
+                        <p id="stat-total-games">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Kazanılan Para</h3>
+                        <p><span id="stat-total-won">0</span> 💰</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Kaybedilen Para</h3>
+                        <p style="color: var(--danger);"><span id="stat-total-lost">0</span> 💰</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>En Büyük Kazanç</h3>
+                        <p style="color: var(--info);"><span id="stat-max-win">0</span> 💰</p>
+                    </div>
+                </div>
+
+                <div class="rank-progress-container">
+                    <h3 id="rank-title-next">Sıradaki Rütbe: ⚡ Acemi</h3>
+                    
+                    <div style="margin-bottom: 10px;">
+                        <div class="progress-text"><span>Oyun Hedefi: <span id="rank-games-text">0/25</span></span></div>
+                        <div class="progress-bar-bg"><div id="rank-games-bar" class="progress-bar-fill"></div></div>
+                    </div>
+                    
+                    <div>
+                        <div class="progress-text"><span>Kazanç Hedefi: <span id="rank-coins-text">0/10.000 💰</span></span></div>
+                        <div class="progress-bar-bg"><div id="rank-coins-bar" class="progress-bar-fill" style="background: var(--gold);"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Oyun 1: Yazı Tura -->
+            <div id="panel-flip" class="game-panel active">
+                <div class="game-title">Yazı mı Tura mı?</div>
+                <div class="game-desc">%50 Şans - Kazanırsan 2X Alırsın</div>
+                <input type="number" id="bet-flip" class="bet-input" placeholder="Bahis Miktarı" min="1">
+                <br>
+                <button onclick="playFlip('Yazı')" id="btn-yazi">Yazı Seç</button>
+                <button onclick="playFlip('Tura')" id="btn-tura">Tura Seç</button>
+                <div id="res-flip" class="result-box"></div>
+            </div>
+
+            <!-- Oyun 2: Slot Makinesi -->
+            <div id="panel-slots" class="game-panel">
+                <div class="game-title">Neon Slots</div>
+                <div class="game-desc">Cömert Slot! 2 aynısına 2X, 3 aynısına 10X!</div>
+                <div id="slot-symbols" class="slots-container" style="font-size: 2.5rem; letter-spacing: 5px; background: #111; padding: 10px; border-radius: 10px; margin: 20px auto; width: fit-content;">🍒 🍋 🔔</div>
+                <input type="number" id="bet-slots" class="bet-input" placeholder="Bahis Miktarı" min="1">
+                <br>
+                <button onclick="playSlots()" id="btn-slot">🎰 Kolu Çek</button>
+                <div id="res-slots" class="result-box"></div>
+            </div>
+
+            <!-- Oyun 3: Dinamik Şans Çarkı -->
+            <div id="panel-wheel" class="game-panel">
+                <div class="game-title">Risk Çarkı</div>
+                <div class="game-desc">Şansını belirle. Şans ne kadar düşükse kazanç o kadar yüksek!</div>
+                
+                <div class="visual-wheel-box" id="visual-wheel">
+                    <div id="wheel-pointer"></div>
+                    <div class="wheel-center-dot"></div>
+                </div>
+
+                <div class="slider-container">
+                    <input type="range" id="wheel-chance" min="1" max="99" value="50" oninput="updateWheelStats()">
+                    <div class="wheel-stats">
+                        <span>Şans: <strong id="stat-chance">%50</strong></span>
+                        <span>Çarpan: <strong id="stat-multi">2.00x</strong></span>
+                    </div>
+                    <div id="wheel-warning" class="warning">Şans %80 veya üzeri olamaz! (Kazanç 0x)</div>
+                </div>
+
+                <input type="number" id="bet-wheel" class="bet-input" placeholder="Bahis Miktarı" min="1">
+                <br>
+                <button onclick="playWheel()" id="btn-wheel">🎡 Çarkı Çevir</button>
+                <div id="res-wheel" class="result-box"></div>
+            </div>
+
+            <!-- Oyun 4: Blackjack (21) -->
+            <div id="panel-bj" class="game-panel">
+                <div class="game-title">Blackjack 21</div>
+                <div class="game-desc">21'e Kurpiyerden daha yakın ol ama 21'i geçme!</div>
+                
+                <div class="cards-area">
+                    <div class="card-hand">
+                        <span>Kurpiyer: <b id="dealer-score">0</b></span>
+                        <div id="dealer-cards" class="cards-display">🂠 🂠</div>
+                    </div>
+                    <div class="card-hand">
+                        <span>Sen: <b id="player-score">0</b></span>
+                        <div id="player-cards" class="cards-display">🂠 🂠</div>
+                    </div>
+                </div>
+
+                <input type="number" id="bet-bj" class="bet-input" placeholder="Bahis Miktarı" min="1">
+                <br>
+                <div id="bj-controls-start">
+                    <button onclick="startBJ()" id="btn-bj-start">Oyunu Başlat</button>
+                </div>
+                <div id="bj-controls-play" style="display: none;">
+                    <button onclick="hitBJ()" style="background: var(--info); color:white;">🃏 Kart Çek</button>
+                    <button onclick="standBJ()" style="background: var(--gold); color:black;">✋ Kal</button>
+                </div>
+                <div id="res-bj" class="result-box"></div>
+            </div>
+
+            <!-- Banka Sistemi -->
+            <div id="panel-bank" class="game-panel">
+                <div class="game-title">Banka & Kasa</div>
+                <div class="game-desc">Paranı Kasaya Yatır, Saatlik %2 Faiz Kazan!</div>
+
+                <div class="grid-2">
+                    <div class="stat-card">
+                        <h3>Kasadaki Para</h3>
+                        <p><span id="bank-vault">0</span> 💰</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Mevcut Borç</h3>
+                        <p style="color: var(--danger);"><span id="bank-debt">0</span> 💰</p>
+                    </div>
+                </div>
+
+                <input type="number" id="bank-amount" class="bet-input" placeholder="Miktar" min="1">
+                <br>
+                <button onclick="depositBank()" style="background:#4caf50; color:white;">Yatır</button>
+                <button onclick="withdrawBank()" style="background:#ff9800; color:white;">Çek</button>
+                <br><br>
+                <button onclick="takeLoan()" style="background:#e91e63; color:white;">Borç Al (+2000)</button>
+                <button onclick="payLoan()" style="background:#00bcd4; color:white;">Borç Öde</button>
+                
+                <div id="res-bank" class="result-box"></div>
+
+                <!-- Faiz Sayacı -->
+                <div class="bank-timer-box" id="bank-timer-display">
+                    ⏳ Sıradaki %2 Faize: --:--
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Rütbe Veritabanı
+        const RANKS = [
+            { name: "🌱 Çaylak", reqGames: 0, reqCoins: 0 },
+            { name: "⚡ Acemi", reqGames: 25, reqCoins: 10000 },
+            { name: "🎲 Oyuncu", reqGames: 100, reqCoins: 50000 },
+            { name: "💎 VIP", reqGames: 250, reqCoins: 150000 },
+            { name: "👑 Casino Kralı", reqGames: 500, reqCoins: 500000 },
+            { name: "🌌 Evrenin Sahibi", reqGames: 999999, reqCoins: 999999999 } // Son sınır
+        ];
+
+        let user = { 
+            name: "", balance: 5000, vault: 0, debt: 0, lastDaily: 0,
+            lastInterestTime: 0,
+            stats: { games: 0, won: 0, lost: 0, maxWin: 0 }
+        };
+        let wheelCurrentRotation = 0;
+        let interestTimer;
+        
+        // Blackjack Değişkenleri
+        let bjDeck = [], playerHand = [], dealerHand = [], bjBet = 0, bjActive = false;
+
+        function init() {
+            const savedData = localStorage.getItem("coinEmpireUser");
+            if (savedData) {
+                let parsed = JSON.parse(savedData);
+                // Eski kayıtları yeni stat sistemine entegre et
+                if (!parsed.stats) parsed.stats = { games: 0, won: 0, lost: 0, maxWin: 0 };
+                if (!parsed.lastInterestTime) parsed.lastInterestTime = Date.now();
+                
+                user = Object.assign(user, parsed);
+                
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+                calculateMissedInterest(); // Çevrimdışı faizi hesapla
+                startInterestTimer();
+                updateUI();
+                updateWheelStats();
+                updateRankAndStatsUI();
+            }
+        }
+
+        function login() {
+            const nameInput = document.getElementById('username-input').value.trim();
+            if (nameInput === "") { alert("Lütfen bir isim gir!"); return; }
+            user.name = nameInput;
+            user.balance = 5000;
+            user.vault = 0; user.debt = 0; user.lastDaily = 0;
+            user.lastInterestTime = Date.now();
+            user.stats = { games: 0, won: 0, lost: 0, maxWin: 0 };
+            saveData();
+            location.reload();
+        }
+
+        function saveData() {
+            localStorage.setItem("coinEmpireUser", JSON.stringify(user));
+            updateUI();
+            updateRankAndStatsUI();
+        }
+
+        // İstatistik & Rütbe Kaydedici
+        function recordStat(type, amount) {
+            user.stats.games += 1;
+            if (type === 'win') {
+                user.stats.won += amount;
+                if (amount > user.stats.maxWin) user.stats.maxWin = amount;
+            } else if (type === 'lose') {
+                user.stats.lost += amount;
+            }
+        }
+
+        function getCurrentRankIndex() {
+            let currentIndex = 0;
+            for (let i = 0; i < RANKS.length; i++) {
+                if (user.stats.games >= RANKS[i].reqGames && user.stats.won >= RANKS[i].reqCoins) {
+                    currentIndex = i;
+                }
+            }
+            return currentIndex;
+        }
+
+        // --- İSTATİSTİK & RÜTBE EKRANINI GÜNCELLEME ---
+        function updateRankAndStatsUI() {
+            document.getElementById('stat-total-games').innerText = user.stats.games.toLocaleString();
+            document.getElementById('stat-total-won').innerText = Math.floor(user.stats.won).toLocaleString();
+            document.getElementById('stat-total-lost').innerText = Math.floor(user.stats.lost).toLocaleString();
+            document.getElementById('stat-max-win').innerText = Math.floor(user.stats.maxWin).toLocaleString();
+
+            let rankIndex = getCurrentRankIndex();
+            let currentRank = RANKS[rankIndex];
+            let nextRank = RANKS[rankIndex + 1];
+
+            document.getElementById('display-rank').innerText = currentRank.name;
+
+            if (nextRank && rankIndex < RANKS.length - 1) {
+                document.getElementById('rank-title-next').innerText = "Sıradaki Rütbe: " + nextRank.name;
+                
+                let gameProgress = Math.min((user.stats.games / nextRank.reqGames) * 100, 100);
+                document.getElementById('rank-games-text').innerText = `${user.stats.games} / ${nextRank.reqGames}`;
+                document.getElementById('rank-games-bar').style.width = `${gameProgress}%`;
+                
+                let coinProgress = Math.min((user.stats.won / nextRank.reqCoins) * 100, 100);
+                document.getElementById('rank-coins-text').innerText = `${Math.floor(user.stats.won).toLocaleString()} / ${nextRank.reqCoins.toLocaleString()} 💰`;
+                document.getElementById('rank-coins-bar').style.width = `${coinProgress}%`;
+            } else {
+                document.getElementById('rank-title-next').innerText = "🎉 Maksimum Rütbeye Ulaştın!";
+                document.getElementById('rank-games-bar').style.width = `100%`;
+                document.getElementById('rank-coins-bar').style.width = `100%`;
+                document.getElementById('rank-games-text').innerText = `Maksimum`;
+                document.getElementById('rank-coins-text').innerText = `Maksimum`;
+            }
+        }
+
+        // --- BANKA FAİZ ZAMANLAYICISI ---
+        function calculateMissedInterest() {
+            if (user.vault > 0) {
+                let now = Date.now();
+                let diff = now - user.lastInterestTime;
+                let oneHour = 60 * 60 * 1000;
+
+                if (diff >= oneHour) {
+                    let hoursPassed = Math.floor(diff / oneHour);
+                    for(let i=0; i<hoursPassed; i++) {
+                        user.vault += Math.floor(user.vault * 0.02);
+                    }
+                    user.lastInterestTime = now - (diff % oneHour); 
+                    saveData();
+                }
+            } else {
+                user.lastInterestTime = Date.now(); 
+            }
+        }
+
+        function startInterestTimer() {
+            interestTimer = setInterval(() => {
+                let timerDisplay = document.getElementById('bank-timer-display');
+                
+                if (user.vault > 0) {
+                    let now = Date.now();
+                    let diff = now - user.lastInterestTime;
+                    let oneHour = 60 * 60 * 1000;
+                    
+                    if (diff >= oneHour) {
+                        user.vault += Math.floor(user.vault * 0.02); 
+                        user.lastInterestTime = now;
+                        saveData();
+                    }
+
+                    let timeLeft = oneHour - (Date.now() - user.lastInterestTime);
+                    let m = Math.floor(timeLeft / 60000);
+                    let s = Math.floor((timeLeft % 60000) / 1000);
+                    timerDisplay.innerText = `⏳ Sıradaki %2 Faize: ${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                } else {
+                    user.lastInterestTime = Date.now();
+                    timerDisplay.innerText = "⏳ Kasada para yok, faiz durdu.";
+                }
+            }, 1000);
+        }
+
+        // --- İÇE / DIŞA AKTAR ---
+        function exportSave() {
+            const saveString = btoa(unescape(encodeURIComponent(JSON.stringify(user))));
+            navigator.clipboard.writeText(saveString).then(() => {
+                alert("Kayıt Kodun panoya kopyalandı!");
+            }).catch(() => {
+                prompt("Kayıt Kodun:", saveString);
+            });
+        }
+
+        function importSave() {
+            const saveString = prompt("Kayıt Kodunu buraya yapıştır:");
+            if(saveString) {
+                try {
+                    const cleanString = saveString.trim(); 
+                    const loadedUser = JSON.parse(decodeURIComponent(escape(atob(cleanString))));
+                    if(loadedUser && loadedUser.name && loadedUser.balance !== undefined) {
+                        user = Object.assign(user, loadedUser);
+                        saveData();
+                        location.reload();
+                    } else { throw new Error(); }
+                } catch(e) {
+                    alert("Hatalı veya geçersiz kayıt kodu!");
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('display-name').innerText = user.name;
+            document.getElementById('display-balance').innerText = Math.floor(user.balance).toLocaleString();
+            
+            document.getElementById('bank-vault').innerText = Math.floor(user.vault || 0).toLocaleString();
+            document.getElementById('bank-debt').innerText = Math.floor(user.debt || 0).toLocaleString();
+
+            const brokeBtn = document.getElementById('btn-broke');
+            brokeBtn.style.display = (user.balance < 1000 && user.vault < 1000) ? 'block' : 'none';
+        }
+
+        function resetAccount() {
+            if(confirm("Hesaptan çıkış yapılacak. Kayıt kodunu almadıysan verilerin kaybolur! Emin misin?")) {
+                localStorage.removeItem("coinEmpireUser");
+                location.reload();
+            }
+        }
+
+        function claimBrokeBonus() {
+            if (user.balance < 1000 && user.vault < 1000) {
+                user.balance += 1000;
+                saveData();
+                alert("Hesabına destek olarak 1000 💰 eklendi!");
+            }
+        }
+
+        function claimDaily() {
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+            if (now - user.lastDaily > oneDay) {
+                user.balance += 2500;
+                user.lastDaily = now;
+                saveData();
+                alert("🎁 Günlük 2500 💰 ödülünü aldın! Yarın tekrar gel.");
+            } else {
+                const timeLeft = new Date(oneDay - (now - user.lastDaily));
+                alert(`Ödülü zaten aldın! Kalan süre: ${timeLeft.getUTCHours()} saat ${timeLeft.getUTCMinutes()} dk.`);
+            }
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.game-panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('panel-' + tabName).classList.add('active');
+            if(tabName === 'wheel') updateWheelStats();
+        }
+
+        function checkBet(betAmount) {
+            if (isNaN(betAmount) || betAmount <= 0) { alert("Geçerli bir bahis gir!"); return false; }
+            if (betAmount > user.balance) { alert("O kadar paran yok!"); return false; }
+            return true;
+        }
+
+        // --- YAZI TURA ---
+        function playFlip(choice) {
+            const bet = parseInt(document.getElementById('bet-flip').value);
+            if (!checkBet(bet)) return;
+            document.getElementById('btn-yazi').disabled = true;
+            document.getElementById('btn-tura').disabled = true;
+
+            const res = document.getElementById('res-flip');
+            res.innerHTML = "Dönüyor... 🪙";
+            res.className = "result-box";
+
+            setTimeout(() => {
+                const isWin = Math.random() >= 0.5;
+                if (isWin) {
+                    user.balance += bet;
+                    recordStat('win', bet * 2);
+                    res.innerHTML = `🎉 ${choice} geldi! ${bet} 💰 kazandın!`;
+                    res.className = "result-box win";
+                } else {
+                    user.balance -= bet;
+                    recordStat('lose', bet);
+                    res.innerHTML = `💀 ${choice === "Yazı" ? "Tura" : "Yazı"} geldi. Kaybettin.`;
+                    res.className = "result-box lose";
+                }
+                saveData();
+                document.getElementById('btn-yazi').disabled = false;
+                document.getElementById('btn-tura').disabled = false;
+            }, 800);
+        }
+
+        // --- SLOT ---
+        function playSlots() {
+            const bet = parseInt(document.getElementById('bet-slots').value);
+            if (!checkBet(bet)) return;
+            
+            document.getElementById('btn-slot').disabled = true;
+            const symbols = ['🍒', '🍋', '🔔', '💎', '7️⃣'];
+            const res = document.getElementById('res-slots');
+            
+            document.getElementById('slot-symbols').innerHTML = "🌀 🌀 🌀";
+            res.innerHTML = "Makaralar dönüyor...";
+            res.className = "result-box";
+            user.balance -= bet; 
+
+            setTimeout(() => {
+                const s1 = symbols[Math.floor(Math.random() * symbols.length)];
+                const s2 = symbols[Math.floor(Math.random() * symbols.length)];
+                const s3 = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('slot-symbols').innerHTML = `${s1} ${s2} ${s3}`;
+
+                if (s1 === s2 && s2 === s3) {
+                    const win = bet * 10; user.balance += win; 
+                    recordStat('win', win);
+                    res.innerHTML = `JACKPOT! 🎉 ${win} 💰 kazandın!`;
+                    res.className = "result-box win";
+                } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+                    const win = bet * 2; user.balance += win; 
+                    recordStat('win', win);
+                    res.innerHTML = `İki simge tuttu! ${win} 💰 kazandın!`;
+                    res.className = "result-box win";
+                } else {
+                    recordStat('lose', bet);
+                    res.innerHTML = `Hiçbiri tutmadı. Kaybettin.`;
+                    res.className = "result-box lose";
+                }
+                saveData();
+                document.getElementById('btn-slot').disabled = false;
+            }, 1000);
+        }
+
+        // --- ÇARK ---
+        function updateWheelStats() {
+            const chance = parseInt(document.getElementById('wheel-chance').value);
+            let multiplier = (100 / chance).toFixed(2);
+            
+            document.getElementById('stat-chance').innerText = `%${chance}`;
+            document.getElementById('visual-wheel').style.background = `conic-gradient(var(--primary) 0% ${chance}%, #444 ${chance}% 100%)`;
+            
+            if (chance >= 80) {
+                multiplier = "0.00";
+                document.getElementById('wheel-warning').style.display = "block";
+            } else {
+                document.getElementById('wheel-warning').style.display = "none";
+            }
+            document.getElementById('stat-multi').innerText = `${multiplier}x`;
+        }
+
+        function playWheel() {
+            const bet = parseInt(document.getElementById('bet-wheel').value);
+            const chance = parseInt(document.getElementById('wheel-chance').value);
+            if (!checkBet(bet)) return;
+
+            if (chance >= 80) {
+                alert("Şans %79 veya altında olmalı!"); return;
+            }
+
+            document.getElementById('btn-wheel').disabled = true;
+            const res = document.getElementById('res-wheel');
+            const pointer = document.getElementById('wheel-pointer');
+            
+            res.innerHTML = "Çark dönüyor... 🎡";
+            res.className = "result-box";
+            user.balance -= bet;
+
+            const isWin = (Math.random() * 100) <= chance;
+            let targetAngle = 0;
+            
+            if(isWin) {
+                targetAngle = Math.floor(Math.random() * (chance * 3.6));
+            } else {
+                targetAngle = Math.floor(Math.random() * ((100 - chance) * 3.6)) + (chance * 3.6);
+            }
+
+            const fullSpins = 360 * 4;
+            const remainingCurrentTurn = wheelCurrentRotation % 360;
+            wheelCurrentRotation += fullSpins + targetAngle - remainingCurrentTurn;
+
+            pointer.style.transform = `rotate(${wheelCurrentRotation}deg)`;
+
+            setTimeout(() => {
+                if (isWin) {
+                    const win = Math.floor(bet * (100 / chance));
+                    user.balance += win; 
+                    recordStat('win', win);
+                    res.innerHTML = `Yeşilde durdu! 🎉 ${win} 💰 kazandın!`;
+                    res.className = "result-box win";
+                } else {
+                    recordStat('lose', bet);
+                    res.innerHTML = `Gri alanda durdu. Kaybettin.`;
+                    res.className = "result-box lose";
+                }
+                saveData();
+                document.getElementById('btn-wheel').disabled = false;
+            }, 2500);
+        }
+
+        // --- BLACKJACK (21) ---
+        function createDeck() {
+            const suits = ['♠', '♥', '♦', '♣'];
+            const values = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+            let deck = [];
+            for (let s of suits) {
+                for (let v of values) { deck.push({ suit: s, value: v }); }
+            }
+            return deck.sort(() => Math.random() - 0.5);
+        }
+
+        function getHandScore(hand) {
+            let score = 0, aces = 0;
+            for (let card of hand) {
+                if (card.value === 'A') { aces++; score += 11; }
+                else if (['K','Q','J'].includes(card.value)) { score += 10; }
+                else { score += parseInt(card.value); }
+            }
+            while (score > 21 && aces > 0) { score -= 10; aces--; }
+            return score;
+        }
+
+        function renderHand(hand, elementId) {
+            document.getElementById(elementId).innerText = hand.map(c => c.value + c.suit).join(' ');
+        }
+
+        function startBJ() {
+            bjBet = parseInt(document.getElementById('bet-bj').value);
+            if (!checkBet(bjBet)) return;
+
+            user.balance -= bjBet;
+            saveData();
+
+            bjDeck = createDeck();
+            playerHand = [bjDeck.pop(), bjDeck.pop()];
+            dealerHand = [bjDeck.pop(), bjDeck.pop()];
+
+            bjActive = true;
+            document.getElementById('bj-controls-start').style.display = 'none';
+            document.getElementById('bj-controls-play').style.display = 'block';
+            document.getElementById('res-bj').innerText = "Kartını çek veya kal!";
+            document.getElementById('res-bj').className = "result-box";
+
+            renderHand(playerHand, 'player-cards');
+            document.getElementById('dealer-cards').innerText = dealerHand[0].value + dealerHand[0].suit + " 🂠";
+            
+            document.getElementById('player-score').innerText = getHandScore(playerHand);
+            document.getElementById('dealer-score').innerText = "?";
+
+            if (getHandScore(playerHand) === 21) {
+                endBJ("Blackjack! 🎉 2.5X Kazandın!", 2.5);
+            }
+        }
+
+        function hitBJ() {
+            if (!bjActive) return;
+            playerHand.push(bjDeck.pop());
+            renderHand(playerHand, 'player-cards');
+            let pScore = getHandScore(playerHand);
+            document.getElementById('player-score').innerText = pScore;
+
+            if (pScore > 21) {
+                endBJ("21'i geçtin! Kaybettin 💀", 0);
+            }
+        }
+
+        function standBJ() {
+            if (!bjActive) return;
+            
+            let dScore = getHandScore(dealerHand);
+            while (dScore < 17) {
+                dealerHand.push(bjDeck.pop());
+                dScore = getHandScore(dealerHand);
+            }
+
+            renderHand(dealerHand, 'dealer-cards');
+            document.getElementById('dealer-score').innerText = dScore;
+            let pScore = getHandScore(playerHand);
+
+            if (dScore > 21 || pScore > dScore) {
+                endBJ(`Kazandın! 🎉 ${bjBet * 2} 💰`, 2);
+            } else if (pScore === dScore) {
+                endBJ("Berabere (Push)! Paranı geri aldın.", 1);
+            } else {
+                endBJ("Kurpiyer kazandı! 💀", 0);
+            }
+        }
+
+        function endBJ(msg, multiplier) {
+            bjActive = false;
+            if (multiplier > 0) {
+                const win = Math.floor(bjBet * multiplier);
+                user.balance += win;
+                if(multiplier > 1) recordStat('win', win); // Berabere kalırsa stat ekleme, sadece oyun say
+                else user.stats.games += 1; 
+            } else {
+                recordStat('lose', bjBet);
+            }
+            saveData();
+            document.getElementById('res-bj').innerText = msg;
+            document.getElementById('res-bj').className = multiplier > 1 ? "result-box win" : "result-box lose";
+            document.getElementById('bj-controls-start').style.display = 'block';
+            document.getElementById('bj-controls-play').style.display = 'none';
+        }
+
+        // --- BANKA İŞLEMLERİ ---
+        function depositBank() {
+            const amt = parseInt(document.getElementById('bank-amount').value);
+            if (isNaN(amt) || amt <= 0 || amt > user.balance) { alert("Geçersiz miktar!"); return; }
+            user.balance -= amt;
+            user.vault += amt;
+            user.lastInterestTime = Date.now(); // Yeni para yatınca süre sıfırlanır
+            saveData();
+            document.getElementById('res-bank').innerText = `${amt} 💰 kasaya yatırıldı. Süre sıfırlandı.`;
+        }
+
+        function withdrawBank() {
+            const amt = parseInt(document.getElementById('bank-amount').value);
+            if (isNaN(amt) || amt <= 0 || amt > user.vault) { alert("Kasadaki paradan fazla çekemezsin!"); return; }
+            user.vault -= amt;
+            user.balance += amt;
+            saveData();
+            document.getElementById('res-bank').innerText = `${amt} 💰 kasadan çekildi.`;
+        }
+
+        function takeLoan() {
+            if (user.debt > 0) { alert("Zaten ödenmemiş borcun var!"); return; }
+            user.debt = 2500; // %25 Faizli
+            user.balance += 2000;
+            saveData();
+            document.getElementById('res-bank').innerText = "2000 💰 borç alındı (Geri Ödeme: 2500 💰).";
+        }
+
+        function payLoan() {
+            if (user.debt === 0) { alert("Borcun yok!"); return; }
+            if (user.balance < user.debt) { alert("Borcu ödemek için yeterli bakiyen yok!"); return; }
+            user.balance -= user.debt;
+            user.debt = 0;
+            saveData();
+            document.getElementById('res-bank').innerText = "Borcun tamamı ödendi!";
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
